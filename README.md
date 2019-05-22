@@ -1,4 +1,4 @@
-# Lightning Network's Bidirectional Payment Channels on CKB
+# Payment Channels on CKB
 
 ## Prerequisites
 
