@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - [CKB](https://github.com/nervosnetwork/ckb/tree/v0.12.2) (ckb 0.12.2 (v0.12.2 2019-05-20))
-- [ckb-sdk-ruby](https://github.com/u2/ckb-sdk-ruby/tree/lightning)
+- [ckb-sdk-ruby](https://github.com/u2/ckb-sdk-ruby/tree/lightning) (https://github.com/u2/ckb-sdk-ruby/tree/lightning)
 
 ## Design
 
@@ -100,6 +100,10 @@ Before this, you should already installed the ckb and ckb-sdk-ruby.
 1. Compile
 
 ```
+git submodule update --init --recursive
+```
+
+```
 docker run -it --rm -v `pwd`:/data  xxuejie/riscv-gnu-toolchain-rv64imac:latest bin/bash
 cd /data
 make two_of_two
@@ -121,8 +125,10 @@ Wait for a few seconds...
 
 3. Run lightning
 
+Scenario 0: Both parities comply the rules and cooperatively close out the channel
+
 ```
-ruby lightning.rb
+bash scenario_0.sh
 ```
 It works as below:
 
@@ -130,3 +136,15 @@ It works as below:
 1) create and boadcast the Funding Transaction
 2) create another commitment transation for updating the current balances of both parties
 3) create Exercise Settlement Transaction for cooperatively closing out the channel
+
+Scenario 1: Alice broadcasts old commitment transaction and all the funds are given to the other party as a penalty
+
+```
+bash scenario_1.sh
+```
+It works as below:
+
+0) create first commitment transaction
+1) create and boadcast the Funding Transaction
+2) create another commitment transation for updating the current balances of both parties
+3) Alice broadcasts old commitment transaction and all the funds are given to the other party as a penalty

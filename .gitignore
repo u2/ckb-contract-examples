@@ -8,3 +8,6 @@ two_of_two
 
 header/flatbuffers_common_reader.h
 header/protocol_reader.h
+
+scenario_1.rb
+scenario_0.rb
