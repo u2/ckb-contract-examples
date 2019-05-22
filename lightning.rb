@@ -430,7 +430,7 @@ end
 
 puts "3.3 Breach Remedy Transaction for parent commit transaction"
 puts "    alice discloses the alice2 private keys to the counterparty"
-puts "    bob  disclose the bob2 private keys to the counterparty"
+puts "    bob  discloses the bob2 private keys to the counterparty"
 
 br2a_input = Types::Input.new(
   previous_output: Types::OutPoint.new(cell: Types::CellOutPoint.new(tx_hash: c1a_tx_hash, index: 0)),
