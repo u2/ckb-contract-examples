@@ -12,19 +12,27 @@ god = Wallet.from_hex(api, "0xe79f3207ea4980b7fed79956d5934249ceac4751a4fae01a0f
 bob = Wallet.from_hex(api, "0xa272f08f25809112aa8a8c42967418d8404e80f4313a8ae928c15beee3482012")
 alice = Wallet.from_hex(api, "0xefc3957bc1d1ee67aaea83e54d7bdfc8069d0eba52e7a247bcdcb8b2d9705601")
 
-god.send_capacity(alice.address, 300 * 10 ** 8)
+alice2 = Wallet.from_hex(api, "0xdf51aa81f4e19c1c57ca764a7810400e68d899f5aebf8e46d89401a7ce568c7e")
+alice3 = Wallet.from_hex(api, "0x70972471656087d365955112fa5f795be5c28ad342de64a79ac2530ce302cb7f")
 
-while alice.get_balance < 300 * 10 ** 8
-  sleep 1
-end
+bob2 = Wallet.from_hex(api, "0x2c1365696e17e37d277d44f6cef59eb9bf588974c103937ea52679a28702118c")
+bob3 = Wallet.from_hex(api, "0x8665b2764dd353e3f63c86f261faf7b30a6a91ba6bbf546a2d6c4249a293f637")
 
-god.send_capacity(bob.address, 300 * 10 ** 8)
+puts god.send_capacity(bob.address, 300 * 10 ** 8)
 
 while bob.get_balance < 300 * 10 ** 8
   sleep 1
 end
 
-sleep 5
+sleep 10
+
+puts god.send_capacity(alice.address, 300 * 10 ** 8)
+
+while alice.get_balance < 300 * 10 ** 8
+  sleep 1
+end
+
+sleep 10
 
 puts "1. unsigned funding transaction"
 
@@ -76,15 +84,6 @@ puts "   Outputs:"
 puts "      0: RSMC alice&bob 300 ckb"
 puts "      1: no locktime for bob 300 ckb"
 
-# TODO:
-# 这里不太会调用tx中的since，如果可以调用的话，alice&bob的签名都有的情况下可以立即花费，否则需要等待一定时间alice才能花费。
-# 这个时候output实际上是alice的一个临时私钥的pubkey hash锁定的，
-# 在构建Breach Remedy Transaction的时候，只要把这个alice的临时私钥给对手方bob即可。
-
-# 现在的做法是，额外构建一个交易，然后双方签名的交易需要在等待一段时间后，这个交易才可以被alice花费。
-# 构建Breach Remedy Transaction的时候，只要双方另外再构建一个交易，使得这个交易可以被立刻执行，并被bob花费。
-# 这种情况客户端会额外构造一些交易，上面的情况客户端需要额外多保存私钥，且交易的数据量要远远大于私钥。
-
 c1a_input = Types::Input.new(
   previous_output: Types::OutPoint.new(cell: Types::CellOutPoint.new(tx_hash: funding_tx_hash, index: 0)),
   args: [],
@@ -95,7 +94,7 @@ c1a_output_0 = Types::Output.new(
   capacity: capacity,
   data: "0x",
   lock: Types::Script.new(
-    args: [alice.blake160, bob.blake160],
+    args: [alice2.blake160, bob.blake160],
     code_hash: god_c.contracts[:tot][:binary_hash]
   )
 )
@@ -117,7 +116,7 @@ c1a_tx_hash = api.compute_transaction_hash(c1a)
 
 c1a_alice_witnesses = c1a.sign(alice.key, c1a_tx_hash).witnesses
 
-puts "Rd1a: alice could spend output-0 100 blocks later"
+puts "Rd1a (Revocable Delivery transaction): alice could spend output-0 after 100 blocks confirmation"
 
 rd1a_input = Types::Input.new(
   previous_output: Types::OutPoint.new(cell: Types::CellOutPoint.new(tx_hash: c1a_tx_hash, index: 0)),
@@ -129,7 +128,7 @@ rd1a_output = Types::Output.new(
   capacity: capacity,
   data: "0x",
   lock: Types::Script.new(
-    args: [alice.blake160],
+    args: [alice2.blake160],
     code_hash: api.system_script_code_hash
   )
 )
@@ -143,7 +142,7 @@ rd1a = Transaction.new(
 
 rd1a_tx_hash = api.compute_transaction_hash(rd1a)
 
-rd1a_alice_witnesses = rd1a.sign(alice.key, rd1a_tx_hash).witnesses
+rd1a_alice_witnesses = rd1a.sign(alice2.key, rd1a_tx_hash).witnesses
 
 puts "bob create commitment tx 1b (C1b)"
 puts "   Only bob can broadcast"
@@ -161,7 +160,7 @@ c1b_output_0 = Types::Output.new(
   capacity: capacity,
   data: "0x",
   lock: Types::Script.new(
-    args: [alice.blake160, bob.blake160],
+    args: [alice.blake160, bob2.blake160],
     code_hash: god_c.contracts[:tot][:binary_hash]
   )
 )
@@ -183,7 +182,7 @@ c1b_tx_hash = api.compute_transaction_hash(c1b)
 
 c1b_bob_witnesses = c1b.sign(bob.key, c1b_tx_hash).witnesses
 
-puts "Rd1b: bob could spend output-0 100 blocks later"
+puts "Rd1b: bob could spend output-0 after 100 blocks confirmation"
 
 rd1b_input = Types::Input.new(
   previous_output: Types::OutPoint.new(cell: Types::CellOutPoint.new(tx_hash: c1b_tx_hash, index: 0)),
@@ -195,7 +194,7 @@ rd1b_output = Types::Output.new(
   capacity: capacity,
   data: "0x",
   lock: Types::Script.new(
-    args: [bob.blake160],
+    args: [bob2.blake160],
     code_hash: api.system_script_code_hash
   )
 )
@@ -213,7 +212,7 @@ rd1b_bob_witnesses = rd1b.sign(bob.key, rd1b_tx_hash).witnesses
 
 puts "2.2 Exchange the signatures for the children"
 puts "2.2.1 exchange signatures for the Revocable Delivery transaction"
-# TODO: exchange private keys if we add Revocable Sequence Maturity in the commitment tx
+# TODO: alice should keep rd1a for if we add Revocable Sequence Maturity in the commitment tx
 
 rd1a_bob_witnesses = rd1a.sign(bob.key, rd1a_tx_hash).witnesses
 
@@ -282,7 +281,7 @@ c2a_output_0 = Types::Output.new(
   capacity: 400 * 10 ** 8,
   data: "0x",
   lock: Types::Script.new(
-    args: [alice.blake160, bob.blake160],
+    args: [alice3.blake160, bob.blake160],
     code_hash: god_c.contracts[:tot][:binary_hash]
   )
 )
@@ -316,7 +315,7 @@ rd2a_output = Types::Output.new(
   capacity: 400 * 10 ** 8,
   data: "0x",
   lock: Types::Script.new(
-    args: [alice.blake160],
+    args: [alice3.blake160],
     code_hash: api.system_script_code_hash
   )
 )
@@ -330,7 +329,7 @@ rd2a = Transaction.new(
 
 rd2a_tx_hash = api.compute_transaction_hash(rd2a)
 
-rd2a_alice_witnesses = rd2a.sign(alice.key, rd1a_tx_hash).witnesses
+rd2a_alice_witnesses = rd2a.sign(alice3.key, rd1a_tx_hash).witnesses
 
 puts "bob create commitment tx 2b (C2b)"
 puts "   Only bob can broadcast"
@@ -348,7 +347,7 @@ c2b_output_0 = Types::Output.new(
   capacity: 200 * 10 ** 8,
   data: "0x",
   lock: Types::Script.new(
-    args: [alice.blake160, bob.blake160],
+    args: [alice.blake160, bob3.blake160],
     code_hash: god_c.contracts[:tot][:binary_hash]
   )
 )
@@ -382,7 +381,7 @@ rd2b_output = Types::Output.new(
   capacity: 200 * 10 ** 8,
   data: "0x",
   lock: Types::Script.new(
-    args: [bob.blake160],
+    args: [bob3.blake160],
     code_hash: api.system_script_code_hash
   )
 )
@@ -396,7 +395,7 @@ rd2b = Transaction.new(
 
 rd2b_tx_hash = api.compute_transaction_hash(rd2b)
 
-rd2b_bob_witnesses = rd2b.sign(bob.key, rd2b_tx_hash).witnesses
+rd2b_bob_witnesses = rd2b.sign(bob3.key, rd2b_tx_hash).witnesses
 
 puts "3.2 Exchange the signatures for the children"
 puts "3.2.1 exchange signatures for the Revocable Delivery transaction"
@@ -430,6 +429,8 @@ rd2b_bob_witnesses.each_with_index do |bob_witness, index|
 end
 
 puts "3.3 Breach Remedy Transaction for parent commit transaction"
+puts "    alice discloses the alice2 private keys to the counterparty"
+puts "    bob  disclose the bob2 private keys to the counterparty"
 
 br2a_input = Types::Input.new(
   previous_output: Types::OutPoint.new(cell: Types::CellOutPoint.new(tx_hash: c1a_tx_hash, index: 0)),
@@ -455,7 +456,7 @@ br2a = Transaction.new(
 
 br2a_tx_hash = api.compute_transaction_hash(br2a)
 
-br2a_alice_witnesses = br2a.sign(alice.key, br2a_tx_hash).witnesses
+br2a_alice_witnesses = br2a.sign(alice2.key, br2a_tx_hash).witnesses
 
 br2b_input = Types::Input.new(
   previous_output: Types::OutPoint.new(cell: Types::CellOutPoint.new(tx_hash: c1b_tx_hash, index: 0)),
@@ -481,7 +482,7 @@ br2b = Transaction.new(
 
 br2b_tx_hash = api.compute_transaction_hash(br2b)
 
-br2b_bob_witnesses = br2b.sign(bob.key, br2b_tx_hash).witnesses
+br2b_bob_witnesses = br2b.sign(bob2.key, br2b_tx_hash).witnesses
 
 puts "3.4 Exchange the signatures for the Breach Remedy Transaction"
 
@@ -561,7 +562,6 @@ raise "bob's balance is not correct, got #{bob.get_balance}" if bob.get_balance 
 puts "now alice's balance is #{alice.get_balance}"
 puts "now bob's balance is #{bob.get_balance}"
 
-puts "Fabulous!!!"
-puts "\u{1f60e}"
-puts "Terrific!!!"
-puts "\u{1f618}"
+puts "alice: Fabulous \u{1f60e} !"
+puts "bob: Terrific \u{1f618} !"
+puts "robot: see you next time!"
