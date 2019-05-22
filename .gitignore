@@ -4,9 +4,7 @@ ckb-dev/data
 
 .vscode/
 
-vote
-tot
-debug_cell
+two_of_two
 
 header/flatbuffers_common_reader.h
 header/protocol_reader.h

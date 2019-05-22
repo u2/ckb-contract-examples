@@ -6,18 +6,9 @@ LDFLAGS := -Wl,-static -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl
 SECP256K1_LIB := deps/secp256k1/.libs/libsecp256k1.a
 FLATCC := deps/flatcc/bin/flatcc
 
-all: vote htlc debug_cell
+all: two_of_two
 
-debug_cell: debug_cell.c header/protocol_reader.h $(SECP256K1_LIB)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
-
-vote: vote.c header/protocol_reader.h $(SECP256K1_LIB)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
-
-tot: tot.c header/protocol_reader.h $(SECP256K1_LIB)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
-
-htlc: htlc.c header/protocol_reader.h $(SECP256K1_LIB)
+two_of_two: two_of_two.c header/protocol_reader.h $(SECP256K1_LIB)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
 
 header/protocol_reader.h: header/protocol.fbs $(FLATCC)
@@ -35,7 +26,7 @@ $(SECP256K1_LIB):
 update_schema: header/protocol_reader.h
 
 clean:
-	rm -rf vote htlc debug_cell
+	rm -rf two_of_two
 	cd deps/flatcc && scripts/cleanall.sh
 	cd deps/secp256k1 && make clean
 

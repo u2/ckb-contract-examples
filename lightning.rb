@@ -39,7 +39,7 @@ puts "1. unsigned funding transaction"
 god_c = CKB::Contract.new(god)
 
 puts "1.1 deploy two-of-two multi signatures script"
-god_c.deploy_contract("./tot", :tot, [])
+god_c.deploy_contract("./two_of_two", :tot, [])
 
 puts "1.2 create unsigned finding transaction"
 
