@@ -285,4 +285,4 @@ alice: Oh my...
 bob: Terrific 😘 !
 robot: see you next time!
 ```
-:beer
+:beer:
