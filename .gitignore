@@ -1,1 +1,12 @@
 .idea/
+
+ckb-dev/data
+
+.vscode/
+
+vote
+tot
+debug_cell
+
+header/flatbuffers_common_reader.h
+header/protocol_reader.h

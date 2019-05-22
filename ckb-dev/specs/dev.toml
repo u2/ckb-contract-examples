@@ -1,0 +1,32 @@
+name = "ckb_dev"
+
+[genesis]
+version = 0
+parent_hash = "0x0000000000000000000000000000000000000000000000000000000000000000"
+timestamp = 0
+difficulty = "0x100"
+uncles_hash = "0x0000000000000000000000000000000000000000000000000000000000000000"
+hash = "0x4c2f8ba5f5a0104eaf84fcbb16af4b0e7ca2f2fdb076e748d54ef876d085d49e"
+
+[genesis.seal]
+nonce = 0
+proof = [0]
+
+[params]
+epoch_reward = 5_000_000_000_000_000
+secondary_epoch_reward = 5_000_000_000
+max_block_cycles = 20_000_000_000
+cellbase_maturity = 0
+
+[pow]
+func = "Dummy"
+
+# Delay offset (in milliseconds)
+[pow.params.delay]
+type = "constant"
+value = 2000
+
+# An array list paths to system cell files, which is absolute or relative to
+# the directory containing this config file.
+[[system_cells]]
+path = "cells/always_success"

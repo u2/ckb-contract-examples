@@ -277,4 +277,13 @@ make htlc
     wallet.send_transaction(alice.exit_tx)
     ```
 
+### lightning
+Bidirectional Payment Channels
+
+##### compile
+```shell
+docker run -it --rm -v `pwd`:/data  xxuejie/riscv-gnu-toolchain-rv64imac:latest bin/bash
+cd /data
+make tot
+```
     

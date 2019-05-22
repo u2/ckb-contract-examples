@@ -14,6 +14,9 @@ debug_cell: debug_cell.c header/protocol_reader.h $(SECP256K1_LIB)
 vote: vote.c header/protocol_reader.h $(SECP256K1_LIB)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
 
+tot: tot.c header/protocol_reader.h $(SECP256K1_LIB)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
+
 htlc: htlc.c header/protocol_reader.h $(SECP256K1_LIB)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
 
