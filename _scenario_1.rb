@@ -14,7 +14,7 @@ puts "Rd1a (Revocable Delivery transaction): alice could spend output-0 after 10
 rd1a_input = Types::Input.new(
   previous_output: Types::OutPoint.new(cell: Types::CellOutPoint.new(tx_hash: c1a_tx_hash, index: 0)),
   args: [],
-  since: ((1 << 63) + 100).to_s
+  since: ((1 << 63) + 5).to_s
 )
 
 rd1a_output = Types::Output.new(
@@ -39,7 +39,7 @@ rd1a_alice_witnesses = rd1a.sign(alice2.key, rd1a_tx_hash).witnesses
 
 rd1a.witnesses = rd1a_alice_witnesses
 
-sleep 10
+sleep 20
 
 begin
   api.send_transaction(rd1a)

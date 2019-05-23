@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
     uint64_t length = 0;
     uint8_t flag;
     uint64_t since;
-    uint64_t size = 8;
+    volatile uint64_t size = 8;
 
     if (argc == 10) {
         // signed args:
@@ -45,11 +45,16 @@ int main(int argc, char* argv[])
         // arg[4] pubkey
         // arg[5] signature
         // arg[6] signature size
-        if (ckb_load_input_by_field(since, &size, 0, 0, 1, CKB_INPUT_FIELD_SINCE) != CKB_SUCCESS) {
+        if (ckb_load_input_by_field(&since, &size, 0, 0, 1, CKB_INPUT_FIELD_SINCE) != CKB_SUCCESS) {
             return -98;
         }
 
-        if (since != 9223372036854775818) {
+        char buf[32];
+        memset(buf, 0, 32);
+        snprintf(buf, 32, "m %d", since);
+        ckb_debug(buf);
+
+        if (since != 922337203685477518) {
             return -97;
         }
 
