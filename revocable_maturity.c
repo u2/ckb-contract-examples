@@ -2,6 +2,12 @@
 #include "ckb_syscalls.h"
 #include "ckb_consts.h"
 
+#define VALUE_MASK 0x00ffffffffffffff
+#define METRIC_TYPE_FLAG_MASK 0x6000000000000000
+#define ERROR_METRIC -96
+#define ERROR_IMMATURE -97
+#define ERROR_ARGS_NUM -98
+
 // two of two multi signature
 int main(int argc, char* argv[])
 {
@@ -45,7 +51,7 @@ int main(int argc, char* argv[])
         // arg[5] signature
         // arg[6] signature size
         if (ckb_load_input_by_field(&since, &size, 0, 0, 1, CKB_INPUT_FIELD_SINCE) != CKB_SUCCESS) {
-            return -98;
+            return ERROR_LOAD_SINCE;
         }
 
         flag = *((uint8_t *) argv[3]);
@@ -53,11 +59,17 @@ int main(int argc, char* argv[])
 
         char buf[32];
         memset(buf, 0, 32);
-        snprintf(buf, 32, "since %d flag %d", since, flag);
+        snprintf(buf, 32, "since %lu flag %d", since, flag);
         ckb_debug(buf);
 
-        if (since < 10) {
-            return -97;
+        uint8_t value = since & VALUE_MASK;
+        uint64_t metric = since & METRIC_TYPE_FLAG_MASK;
+        if (metric != 0) {
+            return ERROR_METRIC;
+        }
+
+        if (value < 10) {
+            return ERROR_IMMATURE;
         }
 
         if (flag == 0) {
@@ -66,5 +78,5 @@ int main(int argc, char* argv[])
             return verify_sighash_all(argv[2], argv[4], argv[5], length);
         }
     }
-    return -99;
+    return ERROR_ARGS_NUM;
 }
