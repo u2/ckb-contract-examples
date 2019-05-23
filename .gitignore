@@ -10,5 +10,6 @@ revocable_maturity
 header/flatbuffers_common_reader.h
 header/protocol_reader.h
 
+scenario_2.rb
 scenario_1.rb
 scenario_0.rb

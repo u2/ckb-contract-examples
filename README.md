@@ -32,7 +32,7 @@ Alice create the commitment transactions with two outputs:
 ```
 
 Revocable Maturity Contract is that:
-   - output for Alice, 100-block relative confirmations lock
+   - output for Alice, 10-block relative confirmations lock
    - or bob can spend it with alice2 and bob's signatures immediately, if bob has alice2 private key
 
 Bob creates the commitment transactions with two outputs:
@@ -201,7 +201,8 @@ It works as below:
 0) create first commitment transaction
 1) create and boadcast the Funding Transaction
 2) create another commitment transation for updating the current balances of both parties
-3) Alice broadcasts old commitment transaction and all the funds are given to the other party as a penalty
+3) Alice broadcasts old commitment transaction
+4) Bob monitors the event and broadcasts Breach Remedy Transaction immediately, all the funds are given to Bob as a penalty of Alice
 
 ```
 rm: cannot remove 'scenario_1.rb': No such file or directory
@@ -256,9 +257,9 @@ Bob&Alice should destroy all old Commitment Transactions
 Scenario_1: Alice broadcasts old commitment transaction and all the funds are given to the other party as a penalty
 Alice broadcast the old commitment transaction c1a
 Alice try to broadcast the rd1a but failed
-Rd1a (Revocable Delivery transaction): alice could spend output-0 after 100 blocks confirmation
+Rd1a (Revocable Delivery transaction): alice could spend output-0 after 10 blocks confirmation
 jsonrpc error: {:code=>-3, :message=>"InvalidTx(Immature)"}
-Alice should delivery rd1a after 100-block confirmation
+Alice should delivery rd1a after 10-block confirmation
 Bob monitor that alice broadcasted the c1a
 And broadcast the Breach Remedy Transaction of c1a
 Bob's balance: 290000000000
@@ -270,4 +271,83 @@ alice: Oh my...
 bob: Terrific 😘 !
 robot: see you next time!
 ```
+
+Scenario 2: Alice broadcasts old commitment transaction, but Bob is napping, so Alice takes the fund in the old commitment transaction
+
+```
+bash scenario_2.sh
+```
+It works as below:
+
+0) create first commitment transaction
+1) create and boadcast the Funding Transaction
+2) create another commitment transation for updating the current balances of both parties
+3) Alice broadcasts old commitment transaction
+4) Bob is napping and missing that
+5) Alice steals the funds
+
+```
+0. prepare
+transfer capacity to alice and bob
+0x4f30480f02f9410fa2f3b7e9cf1a89cc7d851d6e68c58ca5193f200ee51c801f
+0x29a207aa983ebacf3ac136402c1c5979612c01e614e7c3c851510331aaea2f61
+1. unsigned funding transaction
+1.1 deploy two-of-two multi signatures script
+    and revocable_maturity script
+deploy contract ./two_of_two
+code len 1174384, use capacity 117448400000000
+deploy contract ./revocable_maturity
+code len 1203360, use capacity 120346000000000
+1.2 create unsigned finding transaction
+2 create commit transaction (children transaction)
+2.1 create commit transaction and sign
+alice create commitment tx 1a (C1a)
+   Only alice can broadcast
+   Outputs:
+      0: RSMC alice&bob 300 ckb
+      1: no locktime for bob 300 ckb
+bob create commitment tx 1b (C1b)
+   Only bob can broadcast
+   Outputs:
+      0: RSMC alice&bob 300 ckb
+      1: no locktime for alice 300 ckb
+2.2 Exchange the signatures for the children
+2.3 Sign the parent (Funding transaction)
+2.4 Exchange the signatures for the parent
+2.5 Broadcast the parent on the blockchain
+0x155c15809cf1a473c40f238a4a85feded958d459f2c54af103b727fae930a138
+{:status=>"committed", :block_hash=>"0x100ee47d305d2523c9cec2d02f42f9a66ade649ba0cfddecb49c7f5d95e4d8e5"}
+3 new commit transaction
+3.1 create commit transaction and sign
+alice create commitment tx 2a (C2a)
+   Only alice can broadcast
+   Outputs:
+      0: RSMC alice&bob 400 ckb
+      1: no locktime for bob 200 ckb
+bob create commitment tx 2b (C2b)
+   Only bob can broadcast
+   Outputs:
+      0: RSMC alice&bob 200 ckb
+      1: no locktime for alice 400 ckb
+3.2 Exchange the signatures for the children
+3.3 Breach Remedy Transaction for parent commit transaction
+    alice discloses the alice2 private keys to the counterparty
+    bob  discloses the bob2 private keys to the counterparty
+3.4 Exchange the signatures for the Breach Remedy Transaction
+Bob&Alice should destroy all old Commitment Transactions
+Scenario_2: Alice broadcasts old commitment transaction
+            but Bob is napping,
+            so Alice takes the fund in the old commitment transaction
+Alice broadcast the old commitment transaction c1a
+Alice try to broadcast the rd1a but failed
+Rd1a (Revocable Delivery transaction): alice could spend output-0 after 10 blocks confirmation
+Alice's balance 60000000000
+Bob is napping...
+Alice takes the input-0 in the old commitment transaction 30000000000
+Alice's new balance: 90000000000
+alice: Terrific 😘 !
+bob: Oh my...
+robot: see you next time!
+```
+
 :beer:

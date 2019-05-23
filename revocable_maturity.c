@@ -34,7 +34,6 @@ int main(int argc, char* argv[])
         length = *((uint64_t *) argv[9]);
         return verify_sighash_all(argv[2], argv[7], argv[8], length);
     }
-    // TODO: FIXME
     if (argc == 7) {
         // signed args:
         // arg[1] alice pubkey hash
@@ -45,19 +44,26 @@ int main(int argc, char* argv[])
         // arg[4] pubkey
         // arg[5] signature
         // arg[6] signature size
-        if (ckb_load_input_by_field(since, &size, 0, 0, 1, CKB_INPUT_FIELD_SINCE) != CKB_SUCCESS) {
+        if (ckb_load_input_by_field(&since, &size, 0, 0, 1, CKB_INPUT_FIELD_SINCE) != CKB_SUCCESS) {
             return -98;
         }
 
-        if (since != 9223372036854775818) {
+        flag = *((uint8_t *) argv[3]);
+        length = *((uint64_t *) argv[6]);
+
+        char buf[32];
+        memset(buf, 0, 32);
+        snprintf(buf, 32, "since %d flag %d", since, flag);
+        ckb_debug(buf);
+
+        if (since < 10) {
             return -97;
         }
 
-        flag = *((uint8_t *) argv[3]);
         if (flag == 0) {
-            return verify_sighash_all(argv[0], argv[4], argv[5], length);
-        } else {
             return verify_sighash_all(argv[1], argv[4], argv[5], length);
+        } else {
+            return verify_sighash_all(argv[2], argv[4], argv[5], length);
         }
     }
     return -99;
