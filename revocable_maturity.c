@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
         // signed args:
         // arg[1] alice pubkey hash
         // arg[2] bob pubkey hash
-        // arg[3] a or b
+        // arg[3] flag(a or b)
 
         // witnesses:
         // arg[4] pubkey
@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
             return -97;
         }
 
-        flag = *((uint8_t *) argv[6]);
+        flag = *((uint8_t *) argv[3]);
         if (flag == 0) {
             return verify_sighash_all(argv[0], argv[4], argv[5], length);
         } else {
