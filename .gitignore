@@ -5,6 +5,7 @@ ckb-dev/data
 .vscode/
 
 two_of_two
+revocable_maturity
 
 header/flatbuffers_common_reader.h
 header/protocol_reader.h

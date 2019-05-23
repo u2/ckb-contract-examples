@@ -39,14 +39,7 @@ puts "1. unsigned funding transaction"
 god_c = CKB::Contract.new(god)
 
 puts "1.1 deploy two-of-two multi signatures script"
-puts "    and revocable_maturity script"
 god_c.deploy_contract("./two_of_two", :tot, [])
-
-sleep 10
-
-god_c.deploy_contract("./revocable_maturity", :revocable_maturity, [])
-
-sleep 5
 
 puts "1.2 create unsigned finding transaction"
 
@@ -57,13 +50,6 @@ inputs_from_bob = bob.send :gather_inputs, capacity, MIN_CELL_CAPACITY
 tot_outpoint = Types::OutPoint.new(
   cell: Types::CellOutPoint.new(
     tx_hash: god_c.contracts[:tot][:tx_hash],
-    index: 0
-  )
-)
-
-revocable_maturity_outpoint = Types::OutPoint.new(
-  cell: Types::CellOutPoint.new(
-    tx_hash: god_c.contracts[:revocable_maturity][:tx_hash],
     index: 0
   )
 )
@@ -81,7 +67,7 @@ outputs = [
 
 unsigned_funding_transaction = Transaction.new(
   version: 0,
-  deps: [api.system_script_out_point],
+  deps: [api.system_script_out_point, tot_outpoint],
   inputs: inputs_from_alice.inputs + inputs_from_bob.inputs,
   outputs: outputs
 )
@@ -109,8 +95,8 @@ c1a_output_0 = Types::Output.new(
   capacity: capacity,
   data: "0x",
   lock: Types::Script.new(
-    args: [alice2.blake160, bob.blake160, "0x"],
-    code_hash: god_c.contracts[:revocable_maturity][:binary_hash]
+    args: [alice2.blake160, bob.blake160],
+    code_hash: god_c.contracts[:tot][:binary_hash]
   )
 )
 
@@ -131,6 +117,34 @@ c1a_tx_hash = api.compute_transaction_hash(c1a)
 
 c1a_alice_witnesses = c1a.sign(alice.key, c1a_tx_hash).witnesses
 
+puts "Rd1a (Revocable Delivery transaction): alice could spend output-0 after 100 blocks confirmation"
+
+rd1a_input = Types::Input.new(
+  previous_output: Types::OutPoint.new(cell: Types::CellOutPoint.new(tx_hash: c1a_tx_hash, index: 0)),
+  args: [],
+  since: ((1 << 63) + 100).to_s
+)
+
+rd1a_output = Types::Output.new(
+  capacity: capacity,
+  data: "0x",
+  lock: Types::Script.new(
+    args: [alice2.blake160],
+    code_hash: api.system_script_code_hash
+  )
+)
+
+rd1a = Transaction.new(
+  version: 0,
+  deps: [api.system_script_out_point],
+  inputs: [rd1a_input],
+  outputs: [rd1a_output]
+)
+
+rd1a_tx_hash = api.compute_transaction_hash(rd1a)
+
+rd1a_alice_witnesses = rd1a.sign(alice2.key, rd1a_tx_hash).witnesses
+
 puts "bob create commitment tx 1b (C1b)"
 puts "   Only bob can broadcast"
 puts "   Outputs:"
@@ -147,7 +161,7 @@ c1b_output_0 = Types::Output.new(
   capacity: capacity,
   data: "0x",
   lock: Types::Script.new(
-    args: [alice.blake160, bob2.blake160, "0x01"],
+    args: [alice.blake160, bob2.blake160],
     code_hash: god_c.contracts[:tot][:binary_hash]
   )
 )
@@ -169,7 +183,53 @@ c1b_tx_hash = api.compute_transaction_hash(c1b)
 
 c1b_bob_witnesses = c1b.sign(bob.key, c1b_tx_hash).witnesses
 
+puts "Rd1b: bob could spend output-0 after 100 blocks confirmation"
+
+rd1b_input = Types::Input.new(
+  previous_output: Types::OutPoint.new(cell: Types::CellOutPoint.new(tx_hash: c1b_tx_hash, index: 0)),
+  args: [],
+  since: ((1 << 63) + 100).to_s
+)
+
+rd1b_output = Types::Output.new(
+  capacity: capacity,
+  data: "0x",
+  lock: Types::Script.new(
+    args: [bob2.blake160],
+    code_hash: api.system_script_code_hash
+  )
+)
+
+rd1b = Transaction.new(
+  version: 0,
+  deps: [api.system_script_out_point],
+  inputs: [rd1b_input],
+  outputs: [rd1b_output]
+)
+
+rd1b_tx_hash = api.compute_transaction_hash(rd1b)
+
+rd1b_bob_witnesses = rd1b.sign(bob.key, rd1b_tx_hash).witnesses
+
 puts "2.2 Exchange the signatures for the children"
+puts "2.2.1 exchange signatures for the Revocable Delivery transaction"
+# TODO: alice should keep rd1a for if we add Revocable Sequence Maturity in the commitment tx
+
+rd1a_bob_witnesses = rd1a.sign(bob.key, rd1a_tx_hash).witnesses
+
+rd1a_witnesses = []
+rd1a_alice_witnesses.each_with_index do |alice_witness, index|
+  rd1a_witnesses.push(Witness.new(data: alice_witness.data + rd1a_bob_witnesses[index].data))
+end
+
+rd1b_alice_witnesses = rd1b.sign(alice.key, rd1b_tx_hash).witnesses
+
+rd1b_witnesses = []
+rd1b_bob_witnesses.each_with_index do |bob_witness, index|
+  rd1b_witnesses.push(Witness.new(data: rd1b_alice_witnesses[index].data + bob_witness.data))
+end
+
+puts "2.2.2 exchange signatures for the Commitment transaction"
 
 c1a_bob_witnesses = c1a.sign(bob.key, c1a_tx_hash).witnesses
 
@@ -200,7 +260,7 @@ puts "2.5 Broadcast the parent on the blockchain"
 
 puts api.send_transaction(unsigned_funding_transaction)
 
-sleep 8
+sleep 5
 
 puts api.get_transaction(funding_tx_hash).tx_status.to_h
 
@@ -222,7 +282,7 @@ c2a_output_0 = Types::Output.new(
   capacity: 400 * 10 ** 8,
   data: "0x",
   lock: Types::Script.new(
-    args: [alice3.blake160, bob.blake160, "0x"],
+    args: [alice3.blake160, bob.blake160],
     code_hash: god_c.contracts[:tot][:binary_hash]
   )
 )
@@ -244,6 +304,34 @@ c2a_tx_hash = api.compute_transaction_hash(c2a)
 
 c2a_alice_witnesses = c2a.sign(alice.key, c2a_tx_hash).witnesses
 
+puts "Rd2a: alice could spend output-0 100 blocks later"
+
+rd2a_input = Types::Input.new(
+  previous_output: Types::OutPoint.new(cell: Types::CellOutPoint.new(tx_hash: c2a_tx_hash, index: 0)),
+  args: [],
+  since: ((1 << 63) + 100).to_s
+)
+
+rd2a_output = Types::Output.new(
+  capacity: 400 * 10 ** 8,
+  data: "0x",
+  lock: Types::Script.new(
+    args: [alice3.blake160],
+    code_hash: api.system_script_code_hash
+  )
+)
+
+rd2a = Transaction.new(
+  version: 0,
+  deps: [api.system_script_out_point],
+  inputs: [rd2a_input],
+  outputs: [rd2a_output]
+)
+
+rd2a_tx_hash = api.compute_transaction_hash(rd2a)
+
+rd2a_alice_witnesses = rd2a.sign(alice3.key, rd1a_tx_hash).witnesses
+
 puts "bob create commitment tx 2b (C2b)"
 puts "   Only bob can broadcast"
 puts "   Outputs:"
@@ -260,7 +348,7 @@ c2b_output_0 = Types::Output.new(
   capacity: 200 * 10 ** 8,
   data: "0x",
   lock: Types::Script.new(
-    args: [alice.blake160, bob3.blake160, "0x01"],
+    args: [alice.blake160, bob3.blake160],
     code_hash: god_c.contracts[:tot][:binary_hash]
   )
 )
@@ -282,7 +370,36 @@ c2b_tx_hash = api.compute_transaction_hash(c2b)
 
 c2b_bob_witnesses = c2b.sign(bob.key, c2b_tx_hash).witnesses
 
+puts "Rd2b: bob could spend output-0 100 blocks later"
+
+rd2b_input = Types::Input.new(
+  previous_output: Types::OutPoint.new(cell: Types::CellOutPoint.new(tx_hash: c2b_tx_hash, index: 0)),
+  args: [],
+  since: ((1 << 63) + 100).to_s
+)
+
+rd2b_output = Types::Output.new(
+  capacity: 200 * 10 ** 8,
+  data: "0x",
+  lock: Types::Script.new(
+    args: [bob3.blake160],
+    code_hash: api.system_script_code_hash
+  )
+)
+
+rd2b = Transaction.new(
+  version: 0,
+  deps: [api.system_script_out_point],
+  inputs: [rd2b_input],
+  outputs: [rd2b_output]
+)
+
+rd2b_tx_hash = api.compute_transaction_hash(rd2b)
+
+rd2b_bob_witnesses = rd2b.sign(bob3.key, rd2b_tx_hash).witnesses
+
 puts "3.2 Exchange the signatures for the children"
+puts "3.2.1 exchange signatures for the Revocable Delivery transaction"
 
 c2a_bob_witnesses = c2a.sign(bob.key, c2a_tx_hash).witnesses
 c2a_witnesses = []
@@ -294,6 +411,22 @@ c2b_alice_witnesses = c2b.sign(alice.key, c2b_tx_hash).witnesses
 c2b_witnesses = []
 c2b_bob_witnesses.each_with_index do |bob_witness, index|
   c2b_witnesses.push(Witness.new(data: c2b_alice_witnesses[index].data + bob_witness.data))
+end
+
+puts "3.2.2 exchange signatures for the Commitment transaction"
+
+rd2a_bob_witnesses = rd2a.sign(bob.key, rd2a_tx_hash).witnesses
+
+rd2a_witnesses = []
+rd2a_alice_witnesses.each_with_index do |alice_witness, index|
+  rd2a_witnesses.push(Witness.new(data: alice_witness.data + rd2a_bob_witnesses[index].data))
+end
+
+rd2b_alice_witnesses = rd2b.sign(alice.key, rd2b_tx_hash).witnesses
+
+rd2b_witnesses = []
+rd2b_bob_witnesses.each_with_index do |bob_witness, index|
+  rd2b_witnesses.push(Witness.new(data: rd2b_alice_witnesses[index].data + bob_witness.data))
 end
 
 puts "3.3 Breach Remedy Transaction for parent commit transaction"
@@ -317,7 +450,7 @@ br2a_output = Types::Output.new(
 
 br2a = Transaction.new(
   version: 0,
-  deps: [api.system_script_out_point, revocable_maturity_outpoint],
+  deps: [api.system_script_out_point, tot_outpoint],
   inputs: [br2a_input],
   outputs: [br2a_output]
 )
@@ -343,7 +476,7 @@ br2b_output = Types::Output.new(
 
 br2b = Transaction.new(
   version: 0,
-  deps: [api.system_script_out_point, revocable_maturity_outpoint],
+  deps: [api.system_script_out_point, tot_outpoint],
   inputs: [br2b_input],
   outputs: [br2b_output]
 )
@@ -368,3 +501,5 @@ br2b_bob_witnesses.each_with_index do |bob_witness, index|
 end
 
 puts "Bob&Alice should destroy all old Commitment Transactions"
+
+sleep 3

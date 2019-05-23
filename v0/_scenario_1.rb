@@ -7,39 +7,9 @@ api.send_transaction(c1a)
 
 sleep 5
 
-puts "Alice try to broadcast the rd1a but failed"
-
-puts "Rd1a (Revocable Delivery transaction): alice could spend output-0 after 100 blocks confirmation"
-
-rd1a_input = Types::Input.new(
-  previous_output: Types::OutPoint.new(cell: Types::CellOutPoint.new(tx_hash: c1a_tx_hash, index: 0)),
-  args: [],
-  since: ((1 << 63) + 100).to_s
-)
-
-rd1a_output = Types::Output.new(
-  capacity: capacity,
-  data: "0x",
-  lock: Types::Script.new(
-    args: [alice2.blake160],
-    code_hash: api.system_script_code_hash
-  )
-)
-
-rd1a = Transaction.new(
-  version: 0,
-  deps: [api.system_script_out_point, revocable_maturity_outpoint],
-  inputs: [rd1a_input],
-  outputs: [rd1a_output]
-)
-
-rd1a_tx_hash = api.compute_transaction_hash(rd1a)
-
-rd1a_alice_witnesses = rd1a.sign(alice2.key, rd1a_tx_hash).witnesses
+puts "Alice try to broadcast the rd1a"
 
 rd1a.witnesses = rd1a_alice_witnesses
-
-sleep 10
 
 begin
   api.send_transaction(rd1a)
@@ -57,11 +27,9 @@ bob_balance = bob.get_balance()
 
 puts "Bob's balance: #{bob_balance}"
 
-puts api.send_transaction(br2a)
+api.send_transaction(br2a)
 
-sleep 8
-
-puts api.get_transaction(br2a_tx_hash).tx_status.to_h
+sleep 5
 
 raise "got the wrong balance #{bob.get_balance}" if bob.get_balance != bob_balance + 300 * 10 ** 8
 

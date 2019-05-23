@@ -6,9 +6,12 @@ LDFLAGS := -Wl,-static -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl
 SECP256K1_LIB := deps/secp256k1/.libs/libsecp256k1.a
 FLATCC := deps/flatcc/bin/flatcc
 
-all: two_of_two
+all: two_of_two revocable_maturity
 
 two_of_two: two_of_two.c header/protocol_reader.h $(SECP256K1_LIB)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
+
+revocable_maturity: revocable_maturity.c header/protocol_reader.h $(SECP256K1_LIB)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
 
 header/protocol_reader.h: header/protocol.fbs $(FLATCC)
