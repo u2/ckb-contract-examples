@@ -98,7 +98,7 @@ git submodule update --init --recursive
 ```
 docker run -it --rm -v `pwd`:/data  xxuejie/riscv-gnu-toolchain-rv64imac:latest bin/bash
 cd /data
-make two_of_two
+make
 ```
 
 2. Run CKB

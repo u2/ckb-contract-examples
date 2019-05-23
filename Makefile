@@ -29,7 +29,7 @@ $(SECP256K1_LIB):
 update_schema: header/protocol_reader.h
 
 clean:
-	rm -rf two_of_two
+	rm -rf two_of_two revocable_maturity
 	cd deps/flatcc && scripts/cleanall.sh
 	cd deps/secp256k1 && make clean
 
