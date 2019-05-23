@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
     uint64_t length = 0;
     uint8_t flag;
     uint64_t since;
-    volatile uint64_t size = 8;
+    uint64_t size = 8;
 
     if (argc == 10) {
         // signed args:
@@ -34,7 +34,6 @@ int main(int argc, char* argv[])
         length = *((uint64_t *) argv[9]);
         return verify_sighash_all(argv[2], argv[7], argv[8], length);
     }
-    // TODO: FIXME
     if (argc == 7) {
         // signed args:
         // arg[1] alice pubkey hash
@@ -49,20 +48,22 @@ int main(int argc, char* argv[])
             return -98;
         }
 
+        flag = *((uint8_t *) argv[3]);
+        length = *((uint64_t *) argv[6]);
+
         char buf[32];
         memset(buf, 0, 32);
-        snprintf(buf, 32, "m %d", since);
+        snprintf(buf, 32, "since %d flag %d", since, flag);
         ckb_debug(buf);
 
-        if (since != 922337203685477518) {
+        if (since < 10) {
             return -97;
         }
 
-        flag = *((uint8_t *) argv[3]);
         if (flag == 0) {
-            return verify_sighash_all(argv[0], argv[4], argv[5], length);
-        } else {
             return verify_sighash_all(argv[1], argv[4], argv[5], length);
+        } else {
+            return verify_sighash_all(argv[2], argv[4], argv[5], length);
         }
     }
     return -99;

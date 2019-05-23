@@ -9,19 +9,19 @@ sleep 5
 
 puts "Alice try to broadcast the rd1a but failed"
 
-puts "Rd1a (Revocable Delivery transaction): alice could spend output-0 after 100 blocks confirmation"
+puts "Rd1a (Revocable Delivery transaction): alice could spend output-0 after 10 blocks confirmation"
 
 rd1a_input = Types::Input.new(
   previous_output: Types::OutPoint.new(cell: Types::CellOutPoint.new(tx_hash: c1a_tx_hash, index: 0)),
   args: [],
-  since: ((1 << 63) + 5).to_s
+  since: ((1 << 63) + 10).to_s
 )
 
 rd1a_output = Types::Output.new(
   capacity: capacity,
   data: "0x",
   lock: Types::Script.new(
-    args: [alice2.blake160],
+    args: [alice.blake160],
     code_hash: api.system_script_code_hash
   )
 )
@@ -39,13 +39,13 @@ rd1a_alice_witnesses = rd1a.sign(alice2.key, rd1a_tx_hash).witnesses
 
 rd1a.witnesses = rd1a_alice_witnesses
 
-sleep 20
+sleep 3
 
 begin
   api.send_transaction(rd1a)
 rescue => exception
   puts exception
-  puts "Alice should delivery rd1a after 100-block confirmation"
+  puts "Alice should delivery rd1a after 10-block confirmation"
 end
 
 puts "Bob monitor that alice broadcasted the c1a"
