@@ -117,7 +117,9 @@ Wait for a few seconds...
 
 3. Run lightning
 
-Scenario 0: Both parities comply the rules and cooperatively close out the channel
+### Scenario 0
+
+Both parities comply the rules and cooperatively close out the channel
 
 ```
 bash scenario_0.sh
@@ -191,7 +193,9 @@ bob: Terrific 😘 !
 robot: see you next time!
 ```
 
-Scenario 1: Alice broadcasts old commitment transaction and all the funds are given to the other party as a penalty
+### Scenario 1
+
+Alice broadcasts old commitment transaction and all the funds are given to the other party as a penalty
 
 ```
 bash scenario_1.sh
@@ -272,7 +276,9 @@ bob: Terrific 😘 !
 robot: see you next time!
 ```
 
-Scenario 2: Alice broadcasts old commitment transaction, but Bob is napping, so Alice takes the fund in the old commitment transaction
+### Scenario 2
+
+Alice broadcasts old commitment transaction, but Bob is napping, so Alice takes the fund in the old commitment transaction
 
 ```
 bash scenario_2.sh
