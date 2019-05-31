@@ -57,10 +57,10 @@ int main(int argc, char* argv[])
         flag = *((uint8_t *) argv[3]);
         length = *((uint64_t *) argv[6]);
 
-        char buf[32];
-        memset(buf, 0, 32);
-        snprintf(buf, 32, "since %lu flag %d", since, flag);
-        ckb_debug(buf);
+        // char buf[32];
+        // memset(buf, 0, 32);
+        // snprintf(buf, 32, "since %lu flag %d", since, flag);
+        // ckb_debug(buf);
 
         uint8_t value = since & VALUE_MASK;
         uint64_t metric = since & METRIC_TYPE_FLAG_MASK;
