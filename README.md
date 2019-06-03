@@ -357,3 +357,9 @@ robot: see you next time!
 ```
 
 :beer:
+
+## References:
+
+- [The Bitcoin Lightning Network: Scalable Off-Chain Instant Payments](http://lightning.network/lightning-network-paper.pdf)
+- [漫谈闪电网络](https://talk.nervos.org/t/topic/1854)
+- [如何在CKB上实现闪电网络（一）](https://talk.nervos.org/t/ckb/2563)
